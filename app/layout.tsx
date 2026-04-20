@@ -32,6 +32,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      translate="no"
+      suppressHydrationWarning
       className={`${anton.variable} ${manrope.variable} ${archivo.variable}`}
     >
       <body className="relative">{children}</body>
