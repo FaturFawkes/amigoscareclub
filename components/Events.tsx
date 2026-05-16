@@ -112,32 +112,34 @@ export default function Events() {
                 }}
               />
               <div className="relative">
-                <span className="mono text-xs text-lime">Every Month · All Levels</span>
+                <span className="mono text-xs text-lime">Minggu, 24 Mei 2025 · All Levels</span>
                 <h3 className="display text-5xl md:text-6xl mt-4">
-                  JOIN OUR
+                  40% OF
                   <br />
-                  NEXT RUN.
+                  HEART RATE
+                  <br />
+                  RUN - VOL.2
                 </h3>
                 <p className="mt-4 max-w-md text-cream/80">
-                  Every month we pick a new route, lace up, and run as one crew. No qualifying
-                  times, no pressure — just good energy and better company. Follow us for the
-                  latest schedule.
+                  This fun run is a collaboration with Melkkops Coffee &amp; Eatry—expect good
+                  vibes with live DJ music, an easy-going pace for everyone, and exciting door
+                  prize giveaways.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
                   <div>
-                    <div className="mono text-[10px] text-cream/50">Frequency</div>
-                    <div className="font-semibold">Monthly</div>
+                    <div className="mono text-[10px] text-cream/50">Tempat</div>
+                    <div className="font-semibold">Melkkops Coffee &amp; Eatry</div>
                   </div>
                   <div>
                     <div className="mono text-[10px] text-cream/50">Distance</div>
-                    <div className="font-semibold">3–10 km</div>
+                    <div className="font-semibold">5 km</div>
                   </div>
                   <div>
                     <div className="mono text-[10px] text-cream/50">Pace</div>
                     <div className="font-semibold">Every pace welcome</div>
                   </div>
                 </div>
-                <Button href="#contact" variant="primary" className="mt-8">
+                <Button href="/event/40-of-heart-rate-run" variant="primary" className="mt-8">
                   Count me in <span className="btn-arrow">→</span>
                 </Button>
               </div>
