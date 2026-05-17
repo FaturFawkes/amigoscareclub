@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   title: "Amigos Care Club — Run With Fun",
   description:
     "A friendly, inclusive running community. Building a healthy lifestyle through fun and supportive running experiences.",
+  other: {
+    google: "notranslate",
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +39,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${anton.variable} ${manrope.variable} ${archivo.variable}`}
     >
-      <body className="relative">{children}</body>
+      <body suppressHydrationWarning className="relative notranslate">
+        {children}
+      </body>
     </html>
   );
 }
