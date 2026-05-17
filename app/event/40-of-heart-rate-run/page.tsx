@@ -231,6 +231,10 @@ export default function EventRegisterPage() {
           </p>
           <div className="space-y-1">
             <div className="flex justify-between">
+              <span className="text-ink/60 text-sm">HTM</span>
+              <span className="font-bold">Rp 20.000</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-ink/60 text-sm">Bank</span>
               <span className="font-bold">{event.payment.bank}</span>
             </div>
