@@ -21,7 +21,7 @@ info:
     email: contact@amigoscareclub.id
 
 servers:
-  - url: https://api.amigoscareclub.id/v1
+  - url: https://api.amigoscare.club/v1
     description: Production
   - url: http://localhost:3000/api/v1
     description: Local Development

@@ -1,7 +1,7 @@
 import { clearToken, getToken } from "./adminAuth";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.amigoscareclub.id/v1";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.amigoscare.club/v1";
 
 export type RegistrationStatus =
   | "pending_verification"
