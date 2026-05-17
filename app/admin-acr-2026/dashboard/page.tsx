@@ -47,6 +47,16 @@ interface RejectModalState {
   note: string;
 }
 
+interface ProofModalState {
+  open: boolean;
+  url: string;
+  registrantName: string;
+}
+
+function toProofProxyUrl(sourceUrl: string) {
+  return `/api/admin/proof?url=${encodeURIComponent(sourceUrl)}`;
+}
+
 export default function AdminDashboardPage() {
   useAdminGuard();
 
@@ -58,10 +68,16 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<RejectModalState>({
     open: false,
     registrationId: "",
     note: "",
+  });
+  const [proofModal, setProofModal] = useState<ProofModalState>({
+    open: false,
+    url: "",
+    registrantName: "",
   });
 
   const fetchData = useCallback(async () => {
@@ -109,8 +125,10 @@ export default function AdminDashboardPage() {
   async function handleVerify(id: string) {
     setActionLoading(id);
     try {
-      await verifyRegistration(EVENT_SLUG, id, "verified");
+      const res = await verifyRegistration(EVENT_SLUG, id, "verified");
       await fetchData();
+      setSuccessToast(`Email konfirmasi telah dikirim ke ${res.data.email}`);
+      setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Gagal memverifikasi.");
     } finally {
@@ -183,6 +201,14 @@ export default function AdminDashboardPage() {
           </span>
         </div>
 
+        {/* Success Toast */}
+        {successToast && (
+          <div className="rounded-3xl bg-lime border border-lime/60 text-ink px-6 py-4 mb-6 text-sm font-semibold flex items-center gap-2">
+            <span>✓</span>
+            <span>{successToast}</span>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="rounded-3xl bg-ember/10 border border-ember/30 text-ember px-6 py-4 mb-6 text-sm">
@@ -252,20 +278,25 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="px-4 py-3 text-center">{r.age}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{r.coffee_choice}</td>
-                    <td className="px-4 py-3">
-                      {r.payment_proof_url ? (
-                        <a
-                          href={r.payment_proof_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mono text-[10px] text-orange underline"
-                        >
-                          Lihat
-                        </a>
-                      ) : (
-                        <span className="mono text-[10px] text-ink/30">—</span>
-                      )}
-                    </td>
+                     <td className="px-4 py-3">
+                       {r.payment_proof_url ? (
+                         <button
+                           type="button"
+                           onClick={() =>
+                             setProofModal({
+                               open: true,
+                               url: toProofProxyUrl(r.payment_proof_url!),
+                               registrantName: r.name,
+                             })
+                           }
+                           className="mono text-[10px] text-orange underline"
+                         >
+                           Lihat
+                         </button>
+                       ) : (
+                         <span className="mono text-[10px] text-ink/30">—</span>
+                       )}
+                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <StatusBadge status={r.status} />
                     </td>
@@ -371,6 +402,41 @@ export default function AdminDashboardPage() {
               >
                 Konfirmasi Tolak
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Proof Preview Modal */}
+      {proofModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 px-5"
+          onClick={() => setProofModal((s) => ({ ...s, open: false }))}
+        >
+          <div
+            className="w-full max-w-3xl bg-cream rounded-3xl p-4 md:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="display text-2xl">Bukti Pembayaran</h2>
+                <p className="text-sm text-ink/60 mt-1">{proofModal.registrantName}</p>
+              </div>
+              <button
+                type="button"
+                className="mono text-xs text-ink/50 hover:text-ink"
+                onClick={() => setProofModal((s) => ({ ...s, open: false }))}
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="rounded-2xl border-2 border-ink/10 bg-white overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={proofModal.url}
+                alt={`Bukti pembayaran ${proofModal.registrantName}`}
+                className="block w-full h-auto max-h-[70vh] object-contain"
+              />
             </div>
           </div>
         </div>

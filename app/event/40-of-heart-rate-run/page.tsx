@@ -226,7 +226,8 @@ export default function EventRegisterPage() {
           <div className="mono text-xs text-orange mb-3">Instruksi Pembayaran</div>
           <p className="text-sm text-ink/70 mb-4">
             Silakan transfer biaya pendaftaran ke rekening berikut, lalu unggah
-            bukti pembayaran pada form di bawah.
+            bukti pembayaran pada form di bawah. Email konfirmasi akan dikirim
+            ke alamat emailmu setelah pembayaran diverifikasi oleh admin.
           </p>
           <div className="space-y-1">
             <div className="flex justify-between">
@@ -250,6 +251,10 @@ export default function EventRegisterPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+            <div className="rounded-2xl border-2 border-ink/10 bg-sand/60 px-4 py-3 text-sm text-ink/70 leading-relaxed">
+              Pastikan kamu mengisi <span className="font-semibold text-ink">alamat email yang valid</span> — tiket event akan dikirimkan ke email tersebut setelah pembayaran dikonfirmasi oleh admin.
+            </div>
+
             {submitError && (
               <div className="rounded-2xl bg-ember/10 border border-ember/30 text-ember px-4 py-3 text-sm">
                 {submitError}
@@ -383,7 +388,7 @@ export default function EventRegisterPage() {
             <h2 className="display text-3xl mt-4">Pendaftaran Berhasil!</h2>
             <p className="mt-4 text-ink/75 leading-relaxed">
               {successData?.meta?.message ??
-                "Terima kasih sudah mendaftar. Tiket kamu akan dikirimkan H-1 sebelum acara."}
+                "Terima kasih sudah mendaftar! Tim kami akan memverifikasi pembayaranmu. Email konfirmasi akan dikirim ke alamat emailmu setelah pembayaran dikonfirmasi oleh admin."}
             </p>
             {successData?.data.ticket_number && (
               <p className="mt-3 text-ink/80">

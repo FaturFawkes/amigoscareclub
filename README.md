@@ -18,6 +18,19 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Supabase S3 auth for payment proof preview
+
+Isi env berikut agar endpoint `/api/admin/proof` bisa mengambil file private dari Supabase Storage via S3 Signature V4:
+
+```bash
+SUPABASE_S3_ENDPOINT=https://<project-ref>.storage.supabase.co/storage/v1/s3
+SUPABASE_S3_REGION=<project-region>
+SUPABASE_S3_ACCESS_KEY_ID=<s3-access-key-id>
+SUPABASE_S3_SECRET_ACCESS_KEY=<s3-secret-access-key>
+# Optional, untuk mode Session Token:
+# SUPABASE_S3_SESSION_TOKEN=<jwt-session-token>
+```
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
