@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   createRegistration,
   EventApiError,
   type EventData,
   getEvent,
-  type RegistrationResponse,
 } from "@/lib/eventApi";
 
 const EVENT_SLUG = "40-of-heart-rate-run";
@@ -97,6 +97,7 @@ function validate(form: FormState): Errors {
 }
 
 export default function EventRegisterPage() {
+  const router = useRouter();
   const [event, setEvent] = useState<EventData>(fallbackEvent);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Errors>({});
@@ -104,8 +105,6 @@ export default function EventRegisterPage() {
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [pageError, setPageError] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [successData, setSuccessData] = useState<RegistrationResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,7 +145,7 @@ export default function EventRegisterPage() {
 
     setSubmitting(true);
     try {
-      const res = await createRegistration(EVENT_SLUG, {
+      await createRegistration(EVENT_SLUG, {
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
@@ -154,10 +153,7 @@ export default function EventRegisterPage() {
         coffee_choice: form.coffee_choice,
         payment_proof: form.payment_proof!,
       });
-      setSuccessData(res);
-      setShowModal(true);
-      setForm(emptyForm);
-      setErrors({});
+      router.push("/");
     } catch (err) {
       if (err instanceof EventApiError) {
         if (err.code === "VALIDATION_ERROR" && err.details) {
@@ -367,45 +363,6 @@ export default function EventRegisterPage() {
         )}
       </div>
 
-      {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl bg-cream p-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              aria-label="Tutup"
-              className="absolute right-5 top-5 text-2xl leading-none text-ink/50 hover:text-ink"
-              onClick={() => setShowModal(false)}
-            >
-              ×
-            </button>
-            <div className="text-4xl">🎉</div>
-            <h2 className="display text-3xl mt-4">Pendaftaran Berhasil!</h2>
-            <p className="mt-4 text-ink/75 leading-relaxed">
-              {successData?.meta?.message ??
-                "Terima kasih sudah mendaftar! Tim kami akan memverifikasi pembayaranmu. Email konfirmasi akan dikirim ke alamat emailmu setelah pembayaran dikonfirmasi oleh admin."}
-            </p>
-            {successData?.data.ticket_number && (
-              <p className="mt-3 text-ink/80">
-                Nomor tiket kamu:{" "}
-                <span className="font-bold tracking-wide">{successData.data.ticket_number}</span>
-              </p>
-            )}
-            <button
-              type="button"
-              className="btn btn-primary w-full justify-center mt-6"
-              onClick={() => setShowModal(false)}
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

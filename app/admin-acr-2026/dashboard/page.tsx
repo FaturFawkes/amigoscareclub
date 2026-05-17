@@ -157,12 +157,12 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-sand/40">
+    <main className="h-screen overflow-hidden flex flex-col bg-sand/40">
       {/* Header */}
-      <div className="bg-ink text-cream px-5 md:px-8 py-5 flex items-center justify-between">
+      <div className="bg-ink text-cream px-5 md:px-8 py-4 flex items-center justify-between shrink-0">
         <div>
           <span className="mono text-xs text-lime">Admin Panel</span>
-          <h1 className="display text-2xl mt-1">Event Registrations</h1>
+          <h1 className="display text-2xl mt-0.5">Event Registrations</h1>
           <p className="mono text-[11px] text-cream/50 mt-0.5">
             40% OF HEART RATE RUN – VOL.2
           </p>
@@ -176,7 +176,7 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      <div className="mx-auto max-w-7xl px-5 md:px-8 py-8">
+      <div className="flex-1 overflow-hidden flex flex-col px-5 md:px-8 py-5">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <label className="mono text-xs text-ink/60">Filter:</label>
@@ -224,7 +224,8 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-3xl border-2 border-ink/10 bg-cream">
+        <div className="flex-1 overflow-hidden rounded-3xl border-2 border-ink/10 bg-cream">
+        <div className="overflow-x-auto overflow-y-auto h-full">
           {loading ? (
             <div className="py-20 text-center text-ink/50 mono text-sm">
               Memuat data...
@@ -246,7 +247,9 @@ export default function AdminDashboardPage() {
                     "Kopi",
                     "Bukti",
                     "Status",
+                    "Note",
                     "Daftar",
+                    "Verifikasi",
                     "Aksi",
                   ].map((h) => (
                     <th
@@ -300,12 +303,30 @@ export default function AdminDashboardPage() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <StatusBadge status={r.status} />
                     </td>
+                    <td className="px-4 py-3 max-w-[180px]">
+                      {r.status === "rejected" && r.note ? (
+                        <span className="mono text-[10px] text-ember/80 break-words">{r.note}</span>
+                      ) : (
+                        <span className="mono text-[10px] text-ink/30">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 mono text-[10px] text-ink/50 whitespace-nowrap">
-                      {new Date(r.registered_at).toLocaleDateString("id-ID", {
+                      {new Date(r.registered_at).toLocaleString("id-ID", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
+                    </td>
+                    <td className="px-4 py-3 mono text-[10px] text-ink/50 whitespace-nowrap">
+                      {r.verified_at ? new Date(r.verified_at).toLocaleString("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }) : <span className="text-ink/30">—</span>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {r.status === "pending_verification" && (
@@ -337,10 +358,11 @@ export default function AdminDashboardPage() {
             </table>
           )}
         </div>
+        </div>
 
         {/* Pagination */}
         {meta.total_pages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-3 mt-4 shrink-0">
             <button
               type="button"
               className="btn btn-ghost text-sm px-4 py-2 disabled:opacity-40"

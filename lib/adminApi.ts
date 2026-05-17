@@ -20,6 +20,7 @@ export interface Registration {
   coffee_choice: string;
   status: RegistrationStatus;
   payment_proof_url: string | null;
+  note: string | null;
   registered_at: string;
   verified_at: string | null;
   ticket_sent_at: string | null;
