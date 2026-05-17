@@ -57,6 +57,17 @@ function toProofProxyUrl(sourceUrl: string) {
   return `/api/admin/proof?url=${encodeURIComponent(sourceUrl)}`;
 }
 
+function fmtDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminDashboardPage() {
   useAdminGuard();
 
@@ -162,8 +173,8 @@ export default function AdminDashboardPage() {
       r.coffee_choice,
       STATUS_LABELS[r.status],
       r.note ?? "",
-      new Date(r.registered_at).toLocaleString("id-ID"),
-      r.verified_at ? new Date(r.verified_at).toLocaleString("id-ID") : "",
+      fmtDateTime(r.registered_at),
+      fmtDateTime(r.verified_at),
     ]);
 
     const csv = [headers, ...rows]
@@ -352,22 +363,12 @@ export default function AdminDashboardPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 mono text-[10px] text-ink/50 whitespace-nowrap">
-                      {new Date(r.registered_at).toLocaleString("id-ID", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {fmtDateTime(r.registered_at)}
                     </td>
                     <td className="px-4 py-3 mono text-[10px] text-ink/50 whitespace-nowrap">
-                      {r.verified_at ? new Date(r.verified_at).toLocaleString("id-ID", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }) : <span className="text-ink/30">—</span>}
+                      {r.verified_at
+                        ? fmtDateTime(r.verified_at)
+                        : <span className="text-ink/30">—</span>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {r.status === "pending_verification" && (
