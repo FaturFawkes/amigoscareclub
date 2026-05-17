@@ -324,7 +324,7 @@ export default function EventRegisterPage() {
 
             <div>
               <label className={labelClass} htmlFor="coffee_choice">
-                Pilihan Coffee (Gratis)
+                Pilihan Minuman (Gratis)
               </label>
               <select
                 id="coffee_choice"
