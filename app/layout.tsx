@@ -39,9 +39,6 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${anton.variable} ${manrope.variable} ${archivo.variable}`}
     >
-      <head suppressHydrationWarning>
-        <meta name="google" content="notranslate" />
-      </head>
       <body suppressHydrationWarning className="relative notranslate">
         {children}
       </body>

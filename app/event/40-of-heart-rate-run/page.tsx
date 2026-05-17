@@ -1,84 +1,181 @@
 "use client";
 
 import Link from "next/link";
-import { useState, FormEvent } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  createRegistration,
+  EventApiError,
+  type EventData,
+  getEvent,
+  type RegistrationResponse,
+} from "@/lib/eventApi";
 
-// Mock list — daftar pilihan kopi gratis. List real akan menyusul.
-const COFFEE_OPTIONS = [
-  "Americano",
-  "Cappuccino",
-  "Latte",
-  "Es Kopi Susu",
-  "Espresso",
-];
+const EVENT_SLUG = "40-of-heart-rate-run";
+const PHONE_REGEX = /^(\+62|0)8[0-9]{8,11}$/;
+const MAX_PROOF_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 interface FormState {
-  nama: string;
+  name: string;
   email: string;
-  hp: string;
-  usia: string;
-  coffee: string;
-  bukti: File | null;
+  phone: string;
+  age: string;
+  coffee_choice: string;
+  payment_proof: File | null;
 }
 
 type Errors = Partial<Record<keyof FormState, string>>;
 
 const emptyForm: FormState = {
-  nama: "",
+  name: "",
   email: "",
-  hp: "",
-  usia: "",
-  coffee: "",
-  bukti: null,
+  phone: "",
+  age: "",
+  coffee_choice: "",
+  payment_proof: null,
 };
 
-// Submit di-mock dulu. Nanti ganti dengan fetch ke API route.
-async function submitRegistration(data: FormState): Promise<{ ok: boolean }> {
-  // TODO: kirim `data` ke API route saat backend siap.
-  void data;
-  await new Promise((r) => setTimeout(r, 600));
-  return { ok: true };
+const fallbackEvent: EventData = {
+  slug: EVENT_SLUG,
+  title: "40% OF HEART RATE RUN - VOL.2",
+  date: "2026-05-24",
+  time: "06:00",
+  timezone: "Asia/Jakarta",
+  location: "Melkkops Coffee & Eatry",
+  distance_km: 5,
+  pace: "Every pace welcome",
+  registration_open: true,
+  coffee_options: ["Americano", "Cappuccino", "Latte", "Es Kopi Susu", "Espresso"],
+  payment: {
+    bank: "BCA",
+    account_number: "4061207427",
+    account_name: "Nur Fatchurohman",
+  },
+};
+
+function formatDateToIndonesian(dateIso: string): string {
+  const date = new Date(dateIso);
+  if (Number.isNaN(date.getTime())) return dateIso;
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 function validate(form: FormState): Errors {
   const errors: Errors = {};
-  if (!form.nama.trim()) errors.nama = "Nama wajib diisi.";
+  if (!form.name.trim()) errors.name = "Nama wajib diisi.";
   if (!form.email.trim()) {
     errors.email = "Email wajib diisi.";
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
     errors.email = "Format email tidak valid.";
   }
-  if (!form.hp.trim()) errors.hp = "Nomor HP wajib diisi.";
-  if (!form.usia.trim()) {
-    errors.usia = "Usia wajib diisi.";
-  } else if (Number(form.usia) < 1) {
-    errors.usia = "Usia tidak valid.";
+  if (!form.phone.trim()) {
+    errors.phone = "Nomor HP wajib diisi.";
+  } else if (!PHONE_REGEX.test(form.phone.trim())) {
+    errors.phone = "Format nomor HP tidak valid.";
   }
-  if (!form.coffee) errors.coffee = "Silakan pilih kopi.";
-  if (!form.bukti) errors.bukti = "Bukti pembayaran wajib diunggah.";
+  if (!form.age.trim()) {
+    errors.age = "Usia wajib diisi.";
+  } else if (!Number.isInteger(Number(form.age)) || Number(form.age) < 10) {
+    errors.age = "Usia minimum 10 tahun.";
+  }
+  if (!form.coffee_choice) errors.coffee_choice = "Silakan pilih kopi.";
+
+  if (!form.payment_proof) {
+    errors.payment_proof = "Bukti pembayaran wajib diunggah.";
+  } else {
+    if (!ALLOWED_IMAGE_TYPES.includes(form.payment_proof.type)) {
+      errors.payment_proof = "Format file harus jpeg/png/webp.";
+    } else if (form.payment_proof.size > MAX_PROOF_SIZE) {
+      errors.payment_proof = "Ukuran file maksimal 5 MB.";
+    }
+  }
   return errors;
 }
 
 export default function EventRegisterPage() {
+  const [event, setEvent] = useState<EventData>(fallbackEvent);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(true);
+  const [pageError, setPageError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [successData, setSuccessData] = useState<RegistrationResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      setLoadingEvent(true);
+      setPageError("");
+      try {
+        const res = await getEvent(EVENT_SLUG);
+        if (!cancelled) setEvent(res.data);
+      } catch (err) {
+        if (cancelled) return;
+        setPageError(
+          err instanceof Error ? err.message : "Gagal memuat detail event."
+        );
+      } finally {
+        if (!cancelled) setLoadingEvent(false);
+      }
+    }
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
   }
+
+  const eventDateText = useMemo(() => formatDateToIndonesian(event.date), [event.date]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSubmitError("");
     const found = validate(form);
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
     setSubmitting(true);
-    const res = await submitRegistration(form);
-    setSubmitting(false);
-    if (res.ok) setShowModal(true);
+    try {
+      const res = await createRegistration(EVENT_SLUG, {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        age: Number(form.age),
+        coffee_choice: form.coffee_choice,
+        payment_proof: form.payment_proof!,
+      });
+      setSuccessData(res);
+      setShowModal(true);
+      setForm(emptyForm);
+      setErrors({});
+    } catch (err) {
+      if (err instanceof EventApiError) {
+        if (err.code === "VALIDATION_ERROR" && err.details) {
+          const apiErrors: Errors = {};
+          for (const detail of err.details) {
+            if (detail.field in emptyForm) {
+              apiErrors[detail.field as keyof FormState] = detail.message;
+            }
+          }
+          if (Object.keys(apiErrors).length > 0) setErrors(apiErrors);
+        }
+        setSubmitError(err.message);
+      } else {
+        setSubmitError("Gagal mengirim pendaftaran. Silakan coba lagi.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fieldClass =
@@ -89,176 +186,187 @@ export default function EventRegisterPage() {
   return (
     <main className="min-h-screen bg-sand/40">
       <div className="mx-auto max-w-2xl px-5 md:px-8 py-16 md:py-24">
-        <Link
-          href="/#events"
-          className="mono text-xs text-ink/60 hover:text-orange"
-        >
+        <Link href="/#events" className="mono text-xs text-ink/60 hover:text-orange">
           ← Kembali
         </Link>
 
-        {/* Header event */}
         <header className="mt-6">
-          <span className="mono text-xs text-orange">
-            Pendaftaran Peserta
-          </span>
-          <h1 className="display text-4xl md:text-6xl mt-3">
-            40% OF HEART RATE RUN - VOL.2
-          </h1>
+          <span className="mono text-xs text-orange">Pendaftaran Peserta</span>
+          <h1 className="display text-4xl md:text-6xl mt-3">{event.title}</h1>
         </header>
 
-        {/* Detail acara */}
+        {pageError && (
+          <div className="mt-6 rounded-3xl bg-ember/10 border border-ember/30 text-ember px-6 py-4 text-sm">
+            {pageError}
+          </div>
+        )}
+
         <div className="mt-6 grid grid-cols-2 gap-4 rounded-3xl bg-ink text-cream p-6">
           <div>
             <div className="mono text-[10px] text-cream/50">Hari &amp; Tanggal</div>
-            <div className="font-semibold">Minggu, 24 Mei 2026</div>
+            <div className="font-semibold">{loadingEvent ? "Memuat..." : eventDateText}</div>
           </div>
           <div>
             <div className="mono text-[10px] text-cream/50">Waktu</div>
-            <div className="font-semibold">06.00 WIB</div>
+            <div className="font-semibold">{event.time} WIB</div>
           </div>
           <div>
             <div className="mono text-[10px] text-cream/50">Lokasi</div>
-            <div className="font-semibold">Melkkops Coffee &amp; Eatry</div>
+            <div className="font-semibold">{event.location}</div>
           </div>
           <div>
             <div className="mono text-[10px] text-cream/50">Distance</div>
-            <div className="font-semibold">5 km · Every pace welcome</div>
+            <div className="font-semibold">
+              {event.distance_km} km · {event.pace}
+            </div>
           </div>
         </div>
 
-        {/* Info pembayaran */}
         <div className="mt-6 rounded-3xl border-2 border-orange/40 bg-orange/10 p-6">
-          <div className="mono text-xs text-orange mb-3">
-            Instruksi Pembayaran
-          </div>
+          <div className="mono text-xs text-orange mb-3">Instruksi Pembayaran</div>
           <p className="text-sm text-ink/70 mb-4">
             Silakan transfer biaya pendaftaran ke rekening berikut, lalu unggah
-            bukti pembayaran pada form di bawah.
+            bukti pembayaran pada form di bawah. Email konfirmasi akan dikirim
+            ke alamat emailmu setelah pembayaran diverifikasi oleh admin.
           </p>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-ink/60 text-sm">Bank</span>
-              <span className="font-bold">BCA</span>
+              <span className="font-bold">{event.payment.bank}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink/60 text-sm">No. Rekening</span>
-              <span className="font-bold tracking-wider">4061207427</span>
+              <span className="font-bold tracking-wider">{event.payment.account_number}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink/60 text-sm">Atas Nama</span>
-              <span className="font-bold">Nur Fatchurohman</span>
+              <span className="font-bold">{event.payment.account_name}</span>
             </div>
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
-          <div>
-            <label className={labelClass} htmlFor="nama">
-              Nama
-            </label>
-            <input
-              id="nama"
-              type="text"
-              className={fieldClass}
-              value={form.nama}
-              onChange={(e) => update("nama", e.target.value)}
-            />
-            {errors.nama && <p className={errClass}>{errors.nama}</p>}
+        {!event.registration_open ? (
+          <div className="mt-8 rounded-3xl bg-ink text-cream px-6 py-5 text-sm">
+            Pendaftaran event saat ini ditutup.
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+            <div className="rounded-2xl border-2 border-ink/10 bg-sand/60 px-4 py-3 text-sm text-ink/70 leading-relaxed">
+              Pastikan kamu mengisi <span className="font-semibold text-ink">alamat email yang valid</span> — tiket event akan dikirimkan ke email tersebut setelah pembayaran dikonfirmasi oleh admin.
+            </div>
 
-          <div>
-            <label className={labelClass} htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className={fieldClass}
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-            />
-            {errors.email && <p className={errClass}>{errors.email}</p>}
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="hp">
-              Nomor HP
-            </label>
-            <input
-              id="hp"
-              type="tel"
-              className={fieldClass}
-              value={form.hp}
-              onChange={(e) => update("hp", e.target.value)}
-            />
-            {errors.hp && <p className={errClass}>{errors.hp}</p>}
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="usia">
-              Usia
-            </label>
-            <input
-              id="usia"
-              type="number"
-              min={1}
-              className={fieldClass}
-              value={form.usia}
-              onChange={(e) => update("usia", e.target.value)}
-            />
-            {errors.usia && <p className={errClass}>{errors.usia}</p>}
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="coffee">
-              Pilihan Coffee (Gratis)
-            </label>
-            <select
-              id="coffee"
-              className={fieldClass}
-              value={form.coffee}
-              onChange={(e) => update("coffee", e.target.value)}
-            >
-              <option value="">— Pilih kopi —</option>
-              {COFFEE_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            {errors.coffee && <p className={errClass}>{errors.coffee}</p>}
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="bukti">
-              Bukti Pembayaran
-            </label>
-            <input
-              id="bukti"
-              type="file"
-              accept="image/*"
-              className={`${fieldClass} file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-cream file:font-bold`}
-              onChange={(e) => update("bukti", e.target.files?.[0] ?? null)}
-            />
-            {form.bukti && (
-              <p className="mt-1 text-xs text-ink/60">{form.bukti.name}</p>
+            {submitError && (
+              <div className="rounded-2xl bg-ember/10 border border-ember/30 text-ember px-4 py-3 text-sm">
+                {submitError}
+              </div>
             )}
-            {errors.bukti && <p className={errClass}>{errors.bukti}</p>}
-          </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-full justify-center"
-            disabled={submitting}
-          >
-            {submitting ? "Memproses..." : "Daftar Sekarang"}
-            {!submitting && <span className="btn-arrow">→</span>}
-          </button>
-        </form>
+            <div>
+              <label className={labelClass} htmlFor="name">
+                Nama
+              </label>
+              <input
+                id="name"
+                type="text"
+                className={fieldClass}
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+              />
+              {errors.name && <p className={errClass}>{errors.name}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className={fieldClass}
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+              />
+              {errors.email && <p className={errClass}>{errors.email}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="phone">
+                Nomor HP
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                className={fieldClass}
+                value={form.phone}
+                onChange={(e) => update("phone", e.target.value)}
+              />
+              {errors.phone && <p className={errClass}>{errors.phone}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="age">
+                Usia
+              </label>
+              <input
+                id="age"
+                type="number"
+                min={10}
+                className={fieldClass}
+                value={form.age}
+                onChange={(e) => update("age", e.target.value)}
+              />
+              {errors.age && <p className={errClass}>{errors.age}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="coffee_choice">
+                Pilihan Coffee (Gratis)
+              </label>
+              <select
+                id="coffee_choice"
+                className={fieldClass}
+                value={form.coffee_choice}
+                onChange={(e) => update("coffee_choice", e.target.value)}
+              >
+                <option value="">— Pilih kopi —</option>
+                {event.coffee_options.map((coffee) => (
+                  <option key={coffee} value={coffee}>
+                    {coffee}
+                  </option>
+                ))}
+              </select>
+              {errors.coffee_choice && <p className={errClass}>{errors.coffee_choice}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="payment_proof">
+                Bukti Pembayaran
+              </label>
+              <input
+                id="payment_proof"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className={`${fieldClass} file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-cream file:font-bold`}
+                onChange={(e) => update("payment_proof", e.target.files?.[0] ?? null)}
+              />
+              {form.payment_proof && (
+                <p className="mt-1 text-xs text-ink/60">{form.payment_proof.name}</p>
+              )}
+              {errors.payment_proof && <p className={errClass}>{errors.payment_proof}</p>}
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-full justify-center"
+              disabled={submitting}
+            >
+              {submitting ? "Memproses..." : "Daftar Sekarang"}
+              {!submitting && <span className="btn-arrow">→</span>}
+            </button>
+          </form>
+        )}
       </div>
 
-      {/* Popup notifikasi */}
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5"
@@ -279,14 +387,15 @@ export default function EventRegisterPage() {
             <div className="text-4xl">🎉</div>
             <h2 className="display text-3xl mt-4">Pendaftaran Berhasil!</h2>
             <p className="mt-4 text-ink/75 leading-relaxed">
-              Terima kasih sudah mendaftar. Tiket kamu akan{" "}
-              <strong>dikirimkan H-1 sebelum acara</strong>.
+              {successData?.meta?.message ??
+                "Terima kasih sudah mendaftar! Tim kami akan memverifikasi pembayaranmu. Email konfirmasi akan dikirim ke alamat emailmu setelah pembayaran dikonfirmasi oleh admin."}
             </p>
-            <p className="mt-3 text-ink/75 leading-relaxed">
-              Simpan baik-baik nomor tiketmu — nomor tersebut akan{" "}
-              <strong>digunakan untuk undian doorprize</strong> saat acara
-              berlangsung.
-            </p>
+            {successData?.data.ticket_number && (
+              <p className="mt-3 text-ink/80">
+                Nomor tiket kamu:{" "}
+                <span className="font-bold tracking-wide">{successData.data.ticket_number}</span>
+              </p>
+            )}
             <button
               type="button"
               className="btn btn-primary w-full justify-center mt-6"

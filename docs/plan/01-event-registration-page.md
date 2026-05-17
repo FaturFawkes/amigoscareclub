@@ -9,21 +9,21 @@ Tombol **"Count me in"** pada event card di `components/Events.tsx:142` sebelumn
 Route memakai **slug dari judul event** dengan folder statis per event:
 `"40% OF HEART RATE RUN – VOL.2"` → slug `40-of-heart-rate-run` → route `/event/40-of-heart-rate-run`
 
-**Stack:** Next.js 16 (App Router) · React 19 · Tailwind 4. Submit & file upload di-mock (tidak ada persistence) — struktur kode disiapkan agar mudah disambung ke API nanti.
+**Stack:** Next.js 16 (App Router) · React 19 · Tailwind 4. Submit & file upload sudah terhubung ke backend real via `NEXT_PUBLIC_API_BASE_URL`.
 
 ## Decisions
 
 | Keputusan | Pilihan |
 |-----------|---------|
 | Route structure | Static folder per event (bukan dynamic `[slug]`) |
-| File upload | Mock client-side (tidak kirim ke backend) |
-| Submit target | Client-only — popup langsung muncul, tidak ada persistence |
+| File upload | `multipart/form-data` ke endpoint backend |
+| Submit target | `POST /events/{eventSlug}/registrations` (real API) |
 | Route | `/event/40-of-heart-rate-run` |
 
 ## Implementation
 
 ### 1. Route baru `app/event/40-of-heart-rate-run/page.tsx`
-- Client Component (`"use client"`) — ada form state, validasi, popup interaktif.
+- Client Component (`"use client"`) — ada form state, validasi, fetch detail event, submit API, popup interaktif.
 - Pakai design tokens existing (`bg-cream`, `text-ink`, `bg-orange`, `bg-sand`, kelas `.btn`/`.btn-primary` dari `app/globals.css`).
 
 ### 2. Detail event di halaman
@@ -41,12 +41,12 @@ Kotak highlight menampilkan:
 1. Nama — text, required
 2. Email — email, required, validasi format regex
 3. Nomor HP — tel, required
-4. Usia — number, required, min 1
-5. Pilihan Coffee — `<select>` dropdown mock list (`["Americano","Cappuccino","Latte","Es Kopi Susu","Espresso"]`)
-6. Bukti Pembayaran — `<input type="file" accept="image/*">`, required (validasi file dipilih, tidak dikirim)
+4. Usia — number, required, min 10
+5. Pilihan Coffee — `<select>` dari response `GET /events/{eventSlug}` (`coffee_options`)
+6. Bukti Pembayaran — `<input type="file">`, required, validasi format (jpeg/png/webp) & ukuran (maks 5 MB), dikirim ke backend
 
 ### 5. Submit + Popup notifikasi
-- Submit: validasi semua field → `submitRegistration()` (mock, delay 600ms) → tampilkan modal.
+- Submit: validasi semua field → `POST /events/{eventSlug}/registrations` (`multipart/form-data`) → tampilkan modal sukses dari response API.
 - Isi popup:
   - Konfirmasi pendaftaran berhasil
   - Tiket dikirimkan **H-1 sebelum acara**
