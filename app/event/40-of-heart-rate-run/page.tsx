@@ -8,6 +8,7 @@ import {
   EventApiError,
   type EventData,
   getEvent,
+  type RegistrationResponse,
 } from "@/lib/eventApi";
 
 const EVENT_SLUG = "40-of-heart-rate-run";
@@ -105,6 +106,7 @@ export default function EventRegisterPage() {
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [pageError, setPageError] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [successData, setSuccessData] = useState<RegistrationResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,7 +147,7 @@ export default function EventRegisterPage() {
 
     setSubmitting(true);
     try {
-      await createRegistration(EVENT_SLUG, {
+      const res = await createRegistration(EVENT_SLUG, {
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
@@ -153,7 +155,9 @@ export default function EventRegisterPage() {
         coffee_choice: form.coffee_choice,
         payment_proof: form.payment_proof!,
       });
-      router.push("/");
+      setSuccessData(res);
+      setForm(emptyForm);
+      setErrors({});
     } catch (err) {
       if (err instanceof EventApiError) {
         if (err.code === "VALIDATION_ERROR" && err.details) {
@@ -363,6 +367,30 @@ export default function EventRegisterPage() {
         )}
       </div>
 
+      {successData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5">
+          <div className="relative w-full max-w-md rounded-3xl bg-cream p-8">
+            <div className="text-4xl">🎉</div>
+            <h2 className="display text-3xl mt-4">Pendaftaran Berhasil!</h2>
+            <p className="mt-4 text-ink/75 leading-relaxed">
+              {successData.meta?.message ?? "Terima kasih sudah mendaftar!"}
+            </p>
+            {successData.data.ticket_number && (
+              <p className="mt-3 text-ink/80">
+                Nomor tiket kamu:{" "}
+                <span className="font-bold tracking-wide">{successData.data.ticket_number}</span>
+              </p>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary w-full justify-center mt-6"
+              onClick={() => router.push("/")}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
