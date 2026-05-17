@@ -46,7 +46,7 @@ const fallbackEvent: EventData = {
   distance_km: 5,
   pace: "Every pace welcome",
   registration_open: true,
-  coffee_options: ["Americano", "Cappuccino", "Latte", "Es Kopi Susu", "Espresso"],
+  coffee_options: ["Melkkops Signature (Coffee)", "Lychee Tea (Non-Coffee)"],
   payment: {
     bank: "BCA",
     account_number: "4061207427",
