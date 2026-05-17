@@ -150,6 +150,35 @@ export default function AdminDashboardPage() {
     }
   }
 
+  function handleExportCSV() {
+    const headers = ["No", "No. Tiket", "Nama", "Email", "No. HP", "Usia", "Kopi", "Status", "Note", "Waktu Daftar", "Waktu Verifikasi"];
+    const rows = registrations.map((r, i) => [
+      (page - 1) * PER_PAGE + i + 1,
+      r.ticket_number,
+      r.name,
+      r.email,
+      r.phone,
+      r.age,
+      r.coffee_choice,
+      STATUS_LABELS[r.status],
+      r.note ?? "",
+      new Date(r.registered_at).toLocaleString("id-ID"),
+      r.verified_at ? new Date(r.verified_at).toLocaleString("id-ID") : "",
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `registrasi-40ohhr-${statusFilter}-halaman${page}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleLogout() {
     await adminLogout();
     clearToken();
@@ -199,6 +228,14 @@ export default function AdminDashboardPage() {
           <span className="mono text-xs text-ink/50 ml-auto">
             Total: {meta.total} peserta
           </span>
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={registrations.length === 0}
+            className="mono text-[11px] font-bold border-2 border-ink/20 px-3 py-1.5 rounded-full hover:bg-ink hover:text-cream transition disabled:opacity-40"
+          >
+            Export CSV
+          </button>
         </div>
 
         {/* Success Toast */}
@@ -239,6 +276,7 @@ export default function AdminDashboardPage() {
               <thead>
                 <tr className="border-b-2 border-ink/10 text-left">
                   {[
+                    "No",
                     "No. Tiket",
                     "Nama",
                     "Email",
@@ -262,11 +300,14 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {registrations.map((r) => (
+                {registrations.map((r, i) => (
                   <tr
                     key={r.id}
                     className="border-b border-ink/5 hover:bg-sand/40 transition-colors"
                   >
+                    <td className="px-4 py-3 mono text-[10px] text-ink/40 text-center whitespace-nowrap">
+                      {(page - 1) * PER_PAGE + i + 1}
+                    </td>
                     <td className="px-4 py-3 mono text-xs text-ink/60 whitespace-nowrap">
                       {r.ticket_number}
                     </td>
