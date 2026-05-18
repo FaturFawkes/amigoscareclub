@@ -139,7 +139,7 @@ export default function Events() {
                     <div className="font-semibold">Every pace welcome</div>
                   </div>
                 </div>
-                <Button href="/event/40-of-heart-rate-run" variant="primary" className="mt-8">
+                <Button href="/event/steady-and-slow" variant="primary" className="mt-8">
                   Count me in <span className="btn-arrow">→</span>
                 </Button>
               </div>

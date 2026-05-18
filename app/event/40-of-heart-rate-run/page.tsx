@@ -11,7 +11,7 @@ import {
   type RegistrationResponse,
 } from "@/lib/eventApi";
 
-const EVENT_SLUG = "40-of-heart-rate-run";
+const EVENT_SLUG = "steady-and-slow";
 const PHONE_REGEX = /^(\+62|0)8[0-9]{8,11}$/;
 const MAX_PROOF_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];

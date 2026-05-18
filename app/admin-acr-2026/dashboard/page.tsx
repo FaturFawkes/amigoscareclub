@@ -13,7 +13,7 @@ import {
 } from "@/lib/adminApi";
 import { clearToken, useAdminGuard } from "@/lib/adminAuth";
 
-const EVENT_SLUG = "40-of-heart-rate-run";
+const EVENT_SLUG = "steady-and-slow";
 const PER_PAGE = 20;
 
 const STATUS_LABELS: Record<RegistrationStatus | "all", string> = {
