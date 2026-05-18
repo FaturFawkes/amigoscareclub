@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   title: "Amigos Care Club — Run With Fun",
   description:
     "A friendly, inclusive running community. Building a healthy lifestyle through fun and supportive running experiences.",
+  icons: {
+    icon: "/amigos-logo.jpeg",
+    apple: "/amigos-logo.jpeg",
+  },
   other: {
     google: "notranslate",
   },
