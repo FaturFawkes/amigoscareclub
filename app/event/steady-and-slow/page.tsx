@@ -379,10 +379,10 @@ export default function EventRegisterPage() {
             <p className="mt-4 text-ink/75 leading-relaxed">
               {successData.meta?.message ?? "Terima kasih sudah mendaftar!"}
             </p>
-            {successData.data.ticket_number && (
+            {successData.data.id && (
               <p className="mt-3 text-ink/80">
-                Nomor tiket kamu:{" "}
-                <span className="font-bold tracking-wide">{successData.data.ticket_number}</span>
+                No. Registrasi:{" "}
+                <span className="font-bold tracking-wide mono">{successData.data.id}</span>
               </p>
             )}
             <button
