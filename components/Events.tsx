@@ -114,11 +114,11 @@ export default function Events() {
               <div className="relative">
                 <span className="mono text-xs text-lime">Minggu, 24 Mei 2025 · All Levels</span>
                 <h3 className="display text-5xl md:text-6xl mt-4">
-                  40% OF
+                  Steady and Slow
                   <br />
-                  HEART RATE
+                  (Soft Opening Run
                   <br />
-                  RUN - VOL.2
+                  by Melkkops x Amigos)
                 </h3>
                 <p className="mt-4 max-w-md text-cream/80">
                   This fun run is a collaboration with Melkkops Coffee &amp; Eatry—expect good

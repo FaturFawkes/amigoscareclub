@@ -38,7 +38,7 @@ const emptyForm: FormState = {
 
 const fallbackEvent: EventData = {
   slug: EVENT_SLUG,
-  title: "40% OF HEART RATE RUN - VOL.2",
+  title: "Steady and Slow (Soft Opening Run by Melkkops x Amigos)",
   date: "2026-05-24",
   time: "06:00",
   timezone: "Asia/Jakarta",

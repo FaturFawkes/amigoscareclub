@@ -57,15 +57,13 @@ function toProofProxyUrl(sourceUrl: string) {
   return `/api/admin/proof?url=${encodeURIComponent(sourceUrl)}`;
 }
 
+const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+
 function fmtDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function AdminDashboardPage() {
@@ -204,7 +202,7 @@ export default function AdminDashboardPage() {
           <span className="mono text-xs text-lime">Admin Panel</span>
           <h1 className="display text-2xl mt-0.5">Event Registrations</h1>
           <p className="mono text-[11px] text-cream/50 mt-0.5">
-            40% OF HEART RATE RUN – VOL.2
+            Steady and Slow (Soft Opening Run by Melkkops x Amigos)
           </p>
         </div>
         <button
