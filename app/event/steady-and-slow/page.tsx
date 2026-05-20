@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createRegistration,
   EventApiError,
@@ -13,16 +13,12 @@ import {
 
 const EVENT_SLUG = "steady-and-slow";
 const PHONE_REGEX = /^(\+62|0)8[0-9]{8,11}$/;
-const MAX_PROOF_SIZE = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 interface FormState {
   name: string;
   email: string;
   phone: string;
   age: string;
-  coffee_choice: string;
-  payment_proof: File | null;
 }
 
 type Errors = Partial<Record<keyof FormState, string>>;
@@ -32,8 +28,6 @@ const emptyForm: FormState = {
   email: "",
   phone: "",
   age: "",
-  coffee_choice: "",
-  payment_proof: null,
 };
 
 const fallbackEvent: EventData = {
@@ -83,17 +77,6 @@ function validate(form: FormState): Errors {
   } else if (!Number.isInteger(Number(form.age)) || Number(form.age) < 10) {
     errors.age = "Usia minimum 10 tahun.";
   }
-  if (!form.coffee_choice) errors.coffee_choice = "Silakan pilih kopi.";
-
-  if (!form.payment_proof) {
-    errors.payment_proof = "Bukti pembayaran wajib diunggah.";
-  } else {
-    if (!ALLOWED_IMAGE_TYPES.includes(form.payment_proof.type)) {
-      errors.payment_proof = "Format file harus jpeg/png/webp.";
-    } else if (form.payment_proof.size > MAX_PROOF_SIZE) {
-      errors.payment_proof = "Ukuran file maksimal 5 MB.";
-    }
-  }
   return errors;
 }
 
@@ -138,7 +121,7 @@ export default function EventRegisterPage() {
 
   const eventDateText = useMemo(() => formatDateToIndonesian(event.date), [event.date]);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: { preventDefault: () => void }) {
     e.preventDefault();
     setSubmitError("");
     const found = validate(form);
@@ -152,8 +135,6 @@ export default function EventRegisterPage() {
         email: form.email.trim(),
         phone: form.phone.trim(),
         age: Number(form.age),
-        coffee_choice: form.coffee_choice,
-        payment_proof: form.payment_proof!,
       });
       setSuccessData(res);
       setForm(emptyForm);
@@ -223,28 +204,31 @@ export default function EventRegisterPage() {
         </div>
 
         <div className="mt-6 rounded-3xl border-2 border-orange/40 bg-orange/10 p-6">
-          <div className="mono text-xs text-orange mb-3">Instruksi Pembayaran</div>
+          <div className="mono text-xs text-orange mb-3">Informasi Event</div>
           <p className="text-sm text-ink/70 mb-4">
-            Silakan transfer biaya pendaftaran ke rekening berikut, lalu unggah
-            bukti pembayaran pada form di bawah. Email konfirmasi akan dikirim
-            ke alamat emailmu setelah pembayaran diverifikasi oleh admin.
+            Event ini <span className="font-semibold text-ink">gratis</span>! Kamu akan mendapatkan benefit berikut:
           </p>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-ink/60 text-sm">HTM</span>
-              <span className="font-bold">Rp 20.000</span>
+          <div className="space-y-2">
+            <div className="flex items-start gap-3">
+              <span className="text-orange font-bold mt-0.5">→</span>
+              <div>
+                <div className="font-semibold text-sm text-ink">Free Refreshment</div>
+                <div className="text-xs text-ink/60">Air mineral &amp; buah</div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink/60 text-sm">Bank</span>
-              <span className="font-bold">{event.payment.bank}</span>
+            <div className="flex items-start gap-3">
+              <span className="text-orange font-bold mt-0.5">→</span>
+              <div>
+                <div className="font-semibold text-sm text-ink">Doorprize</div>
+                <div className="text-xs text-ink/60">Nomor tiket registrasimu adalah nomor doorprize — pastikan kamu tetap registrasi!</div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink/60 text-sm">No. Rekening</span>
-              <span className="font-bold tracking-wider">{event.payment.account_number}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-ink/60 text-sm">Atas Nama</span>
-              <span className="font-bold">{event.payment.account_name}</span>
+            <div className="flex items-start gap-3">
+              <span className="text-orange font-bold mt-0.5">→</span>
+              <div>
+                <div className="font-semibold text-sm text-ink">Promo Coffee</div>
+                <div className="text-xs text-ink/60">Buy 1 Get 1 Free untuk pilihan menu tertentu di Melkkops khusus peserta event.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -256,7 +240,7 @@ export default function EventRegisterPage() {
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
             <div className="rounded-2xl border-2 border-ink/10 bg-sand/60 px-4 py-3 text-sm text-ink/70 leading-relaxed">
-              Pastikan kamu mengisi <span className="font-semibold text-ink">alamat email yang valid</span> — tiket event akan dikirimkan ke email tersebut setelah pembayaran dikonfirmasi oleh admin.
+              Pastikan kamu mengisi <span className="font-semibold text-ink">alamat email yang valid</span> — nomor tiket akan dikirimkan ke email tersebut dan digunakan untuk pembagian doorprize.
             </div>
 
             {submitError && (
@@ -320,43 +304,6 @@ export default function EventRegisterPage() {
                 onChange={(e) => update("age", e.target.value)}
               />
               {errors.age && <p className={errClass}>{errors.age}</p>}
-            </div>
-
-            <div>
-              <label className={labelClass} htmlFor="coffee_choice">
-                Pilihan Minuman (Gratis)
-              </label>
-              <select
-                id="coffee_choice"
-                className={fieldClass}
-                value={form.coffee_choice}
-                onChange={(e) => update("coffee_choice", e.target.value)}
-              >
-                <option value="">— Pilih kopi —</option>
-                {event.coffee_options.map((coffee) => (
-                  <option key={coffee} value={coffee}>
-                    {coffee}
-                  </option>
-                ))}
-              </select>
-              {errors.coffee_choice && <p className={errClass}>{errors.coffee_choice}</p>}
-            </div>
-
-            <div>
-              <label className={labelClass} htmlFor="payment_proof">
-                Bukti Pembayaran
-              </label>
-              <input
-                id="payment_proof"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className={`${fieldClass} file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-cream file:font-bold`}
-                onChange={(e) => update("payment_proof", e.target.files?.[0] ?? null)}
-              />
-              {form.payment_proof && (
-                <p className="mt-1 text-xs text-ink/60">{form.payment_proof.name}</p>
-              )}
-              {errors.payment_proof && <p className={errClass}>{errors.payment_proof}</p>}
             </div>
 
             <button
