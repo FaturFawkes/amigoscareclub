@@ -52,8 +52,6 @@ export interface RegistrationPayload {
   email: string;
   phone: string;
   age: number;
-  coffee_choice: string;
-  payment_proof: File;
 }
 
 export interface RegistrationResponse {
@@ -104,16 +102,14 @@ export async function createRegistration(
   eventSlug: string,
   payload: RegistrationPayload
 ): Promise<RegistrationResponse> {
-  const body = new FormData();
-  body.append("name", payload.name);
-  body.append("email", payload.email);
-  body.append("phone", payload.phone);
-  body.append("age", String(payload.age));
-  body.append("coffee_choice", payload.coffee_choice);
-  body.append("payment_proof", payload.payment_proof);
-
   return apiFetch<RegistrationResponse>(`/events/${eventSlug}/registrations`, {
     method: "POST",
-    body,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      age: payload.age,
+    }),
   });
 }
