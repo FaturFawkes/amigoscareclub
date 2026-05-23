@@ -151,4 +151,23 @@ export async function verifyRegistration(
   );
 }
 
+export async function resendTicket(
+  eventSlug: string,
+  registrationId: string
+): Promise<{ data: { email: string } }> {
+  return apiFetch<{ data: { email: string } }>(
+    `/admin/events/${eventSlug}/registrations/${registrationId}/resend-ticket`,
+    { method: "POST" }
+  );
+}
+
+export async function resendAllTickets(
+  eventSlug: string
+): Promise<{ data: { sent: number } }> {
+  return apiFetch<{ data: { sent: number } }>(
+    `/admin/events/${eventSlug}/registrations/resend-all-tickets`,
+    { method: "POST" }
+  );
+}
+
 export { AdminApiError };

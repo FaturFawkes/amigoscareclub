@@ -6,6 +6,8 @@ import {
   AdminApiError,
   listRegistrations,
   verifyRegistration,
+  resendTicket,
+  resendAllTickets,
   adminLogout,
   type Registration,
   type RegistrationStatus,
@@ -77,6 +79,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [resendAllLoading, setResendAllLoading] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<RejectModalState>({
     open: false,
@@ -156,6 +159,33 @@ export default function AdminDashboardPage() {
       alert(err instanceof Error ? err.message : "Gagal menolak pembayaran.");
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  async function handleResendTicket(id: string, email: string) {
+    setActionLoading(id);
+    try {
+      await resendTicket(EVENT_SLUG, id);
+      setSuccessToast(`Tiket berhasil dikirim ulang ke ${email}`);
+      setTimeout(() => setSuccessToast(null), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal mengirim ulang tiket.");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleResendAll() {
+    if (!confirm("Kirim ulang tiket ke semua peserta yang sudah terverifikasi?")) return;
+    setResendAllLoading(true);
+    try {
+      const res = await resendAllTickets(EVENT_SLUG);
+      setSuccessToast(`Tiket berhasil dikirim ulang ke ${res.data.sent} peserta.`);
+      setTimeout(() => setSuccessToast(null), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal mengirim ulang semua tiket.");
+    } finally {
+      setResendAllLoading(false);
     }
   }
 
@@ -244,6 +274,14 @@ export default function AdminDashboardPage() {
             className="mono text-[11px] font-bold border-2 border-ink/20 px-3 py-1.5 rounded-full hover:bg-ink hover:text-cream transition disabled:opacity-40"
           >
             Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleResendAll}
+            disabled={resendAllLoading}
+            className="mono text-[11px] font-bold border-2 border-orange/40 text-orange px-3 py-1.5 rounded-full hover:bg-orange hover:text-cream transition disabled:opacity-40"
+          >
+            {resendAllLoading ? "Mengirim..." : "Resend All Tiket"}
           </button>
         </div>
 
@@ -369,28 +407,40 @@ export default function AdminDashboardPage() {
                         : <span className="text-ink/30">—</span>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {r.status === "pending_verification" && (
-                        <div className="flex gap-2">
+                      <div className="flex gap-2">
+                        {r.status === "pending_verification" && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={actionLoading === r.id}
+                              onClick={() => handleVerify(r.id)}
+                              className="mono text-[10px] font-bold bg-lime text-ink px-3 py-1.5 rounded-full hover:bg-lime/80 transition disabled:opacity-50"
+                            >
+                              {actionLoading === r.id ? "..." : "Verifikasi"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionLoading === r.id}
+                              onClick={() =>
+                                setRejectModal({ open: true, registrationId: r.id, note: "" })
+                              }
+                              className="mono text-[10px] font-bold bg-ember/15 text-ember px-3 py-1.5 rounded-full hover:bg-ember/25 transition disabled:opacity-50"
+                            >
+                              Tolak
+                            </button>
+                          </>
+                        )}
+                        {(r.status === "verified" || r.status === "ticket_sent") && (
                           <button
                             type="button"
                             disabled={actionLoading === r.id}
-                            onClick={() => handleVerify(r.id)}
-                            className="mono text-[10px] font-bold bg-lime text-ink px-3 py-1.5 rounded-full hover:bg-lime/80 transition disabled:opacity-50"
+                            onClick={() => handleResendTicket(r.id, r.email)}
+                            className="mono text-[10px] font-bold border-2 border-orange/40 text-orange px-3 py-1.5 rounded-full hover:bg-orange hover:text-cream transition disabled:opacity-50"
                           >
-                            {actionLoading === r.id ? "..." : "Verifikasi"}
+                            {actionLoading === r.id ? "..." : "Kirim Ulang"}
                           </button>
-                          <button
-                            type="button"
-                            disabled={actionLoading === r.id}
-                            onClick={() =>
-                              setRejectModal({ open: true, registrationId: r.id, note: "" })
-                            }
-                            className="mono text-[10px] font-bold bg-ember/15 text-ember px-3 py-1.5 rounded-full hover:bg-ember/25 transition disabled:opacity-50"
-                          >
-                            Tolak
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
